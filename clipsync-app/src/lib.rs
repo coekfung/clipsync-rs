@@ -23,11 +23,15 @@ fn build_main_window_invisible<R: Runtime>(
 
 fn init_tray_menu<R: Runtime>(app: &App<R>) -> Result<(), Box<dyn std::error::Error>> {
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&quit_i])?;
+    let restart_i = MenuItem::with_id(app, "restart", "Restart", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&quit_i, &restart_i])?;
 
     let menu_event_handler = |app: &AppHandle<R>, event: MenuEvent| match event.id.as_ref() {
         "quit" => {
             app.exit(0);
+        }
+        "restart" => {
+            app.restart();
         }
         _ => {
             eprintln!("No handler for menu item: {:?}", event.id);
