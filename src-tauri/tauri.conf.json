@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "identifier": "com.zhuofeng.clipsync-rs",
   "build": {
-    "beforeDevCommand": "trunk serve",
+    "beforeDevCommand": "trunk serve --config clipsync-frontend",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "trunk build",
-    "frontendDist": "../dist"
+    "beforeBuildCommand": "trunk build --config clipsync-frontend",
+    "frontendDist": "../clipsync-frontend/dist"
   },
   "app": {
     "withGlobalTauri": true,
