@@ -1,13 +1,24 @@
 use tauri::{
     menu::{Menu, MenuEvent, MenuItem},
     tray::{MouseButton, TrayIcon, TrayIconBuilder, TrayIconEvent},
-    App, AppHandle, Manager, RunEvent, Runtime, WebviewWindowBuilder,
+    App, AppHandle, Manager, RunEvent, Runtime, WebviewWindow, WebviewWindowBuilder,
 };
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+fn build_main_window_invisible<R: Runtime>(
+    handle: &AppHandle<R>,
+) -> tauri::Result<WebviewWindow<R>> {
+    Ok(
+        WebviewWindowBuilder::new(handle, "main", tauri::WebviewUrl::App("index.html".into()))
+            .title("ClipSync")
+            .visible(false) // show after restoring state
+            .build()?,
+    )
 }
 
 fn init_tray_menu<R: Runtime>(app: &App<R>) -> Result<(), Box<dyn std::error::Error>> {
@@ -29,12 +40,7 @@ fn init_tray_menu<R: Runtime>(app: &App<R>) -> Result<(), Box<dyn std::error::Er
                 let window = if let Some(window) = icon.app_handle().get_webview_window("main") {
                     window
                 } else {
-                    WebviewWindowBuilder::new(
-                        icon.app_handle(),
-                        "main",
-                        tauri::WebviewUrl::App("index.html".into()),
-                    )
-                    .build()?
+                    build_main_window_invisible(icon.app_handle())?
                 };
 
                 window.show()?;
@@ -61,10 +67,17 @@ fn init_tray_menu<R: Runtime>(app: &App<R>) -> Result<(), Box<dyn std::error::Er
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
-        .setup(|app| init_tray_menu(app))
+        .setup(|app| {
+            init_tray_menu(app)?;
+
+            build_main_window_invisible(app.handle())?.show()?;
+
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![greet])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
