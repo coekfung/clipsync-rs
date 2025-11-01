@@ -1,16 +1,12 @@
 [package]
-name = "clipsync-frontend"
+name = "clipsync-ipc"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-clipsync-ipc = { path = "../clipsync-ipc" }
+clipsync-macros = { path = "../clipsync-macros" }
 
 serde = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 wasm-bindgen = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
-
-console_error_panic_hook = "0.1.7"
-js-sys = "0.3"
-leptos = { version = "0.7", features = ["csr"] }

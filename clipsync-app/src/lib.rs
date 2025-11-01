@@ -1,13 +1,17 @@
+use clipsync_ipc::Commands;
 use tauri::{
     menu::{Menu, MenuEvent, MenuItem},
     tray::{MouseButton, TrayIcon, TrayIconBuilder, TrayIconEvent},
     App, AppHandle, Manager, RunEvent, Runtime, WebviewWindow, WebviewWindowBuilder,
 };
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+struct CommandsImpl;
+
+#[clipsync_macros::command]
+impl Commands for CommandsImpl {
+    async fn hello(name: String) -> String {
+        format!("Hello, {}! You've been greeted from Rust!", name)
+    }
 }
 
 fn build_main_window_invisible<R: Runtime>(
@@ -82,7 +86,8 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet])
+        // .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(CommandsImpl::invoke_handler)
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
         .run(|_app_handle, event| match event {

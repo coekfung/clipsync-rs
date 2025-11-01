@@ -1,5 +1,12 @@
 {
   "emmet.includeLanguages": {
     "rust": "html"
+  },
+  "rust-analyzer.procMacro.ignored": {
+    "leptos_macro": [
+      // optional:
+      // "component",
+      "server"
+    ]
   }
 }
