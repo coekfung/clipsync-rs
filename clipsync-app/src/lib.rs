@@ -105,7 +105,6 @@ pub fn run() {
 
             Ok(())
         })
-        // .invoke_handler(tauri::generate_handler![greet])
         .invoke_handler(CommandsImpl::invoke_handler)
         .build(tauri::generate_context!())
         .expect("error while running tauri application")

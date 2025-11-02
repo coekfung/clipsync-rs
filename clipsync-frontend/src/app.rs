@@ -1,53 +1,72 @@
-use clipsync_ipc::{Commands, CommandsInvoke};
-use leptos::task::spawn_local;
-use leptos::{ev::SubmitEvent, prelude::*};
+use leptos::prelude::*;
 
 #[component]
 pub fn App() -> impl IntoView {
-    let (name, set_name) = signal(String::new());
-    let (greet_msg, set_greet_msg) = signal(String::new());
+    let (host_address, write_host_address) = signal(String::new());
+    let (passkey, write_passkey) = signal(String::new());
+    let (logs, write_logs) = signal(vec![
+        "Program started.".to_string(),
+        "Waiting for connection...".to_string(),
+    ]);
 
-    let update_name = move |ev| {
-        let v = event_target_value(&ev);
-        set_name.set(v);
+    let connect = move |_| {
+        write_logs.update(|l| l.push(format!("Connecting to {}...", host_address.get())));
     };
 
-    let greet = move |ev: SubmitEvent| {
-        ev.prevent_default();
-        spawn_local(async move {
-            let name = name.get_untracked();
-            if name.is_empty() {
-                return;
-            }
-
-            let new_msg = CommandsInvoke::hello(name).await;
-            set_greet_msg.set(new_msg);
-        });
+    let reconnect = move |_| {
+        write_logs.update(|l| l.push("Reconnecting...".to_string()));
     };
 
     view! {
-        <main class="container">
-            <h1>"Welcome to Tauri + Leptos"</h1>
+        <div class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+            <div class="bg-white shadow-md rounded p-6 w-full max-w-md">
+                <h1 class="text-2xl font-bold mb-4 text-center">"Clipboard Sync"</h1>
 
-            <div class="row">
-                <a href="https://tauri.app" target="_blank">
-                    <img src="public/tauri.svg" class="logo tauri" alt="Tauri logo"/>
-                </a>
-                <a href="https://docs.rs/leptos/" target="_blank">
-                    <img src="public/leptos.svg" class="logo leptos" alt="Leptos logo"/>
-                </a>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-1" for="host">"Host Address"</label>
+                    <input
+                        id="host"
+                        type="text"
+                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g. ws://192.168.0.100:9000"
+                        on:input=move |ev| write_host_address.set(event_target_value(&ev))
+                        prop:value=host_address
+                    />
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-1" for="passkey">"Passkey (Optional)"</label>
+                    <input
+                        id="passkey"
+                        type="password"
+                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Optional passkey"
+                        on:input=move |ev| write_passkey.set(event_target_value(&ev))
+                        prop:value=passkey
+                    />
+                </div>
+
+                <div class="flex justify-between mb-4">
+                    <button
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+                        on:click=connect
+                    >
+                        "Connect"
+                    </button>
+                    <button
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded"
+                        on:click=reconnect
+                    >
+                        "Reconnect"
+                    </button>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-300 rounded p-3 h-40 overflow-y-scroll text-sm text-gray-700">
+                    {move || logs.get().iter().map(|log| view! {
+                        <div class="leading-tight">{log.clone()}</div>
+                    }).collect::<Vec<_>>()}
+                </div>
             </div>
-            <p>"Click on the Tauri and Leptos logos to learn more."</p>
-
-            <form class="row" on:submit=greet>
-                <input
-                    id="greet-input"
-                    placeholder="Enter a name..."
-                    on:input=update_name
-                />
-                <button type="submit">"Greet"</button>
-            </form>
-            <p>{ move || greet_msg.get() }</p>
-        </main>
+        </div>
     }
 }
