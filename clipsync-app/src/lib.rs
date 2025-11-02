@@ -1,6 +1,6 @@
 use clipsync_ipc::Commands;
 use tauri::{
-    menu::{Menu, MenuEvent, MenuItem},
+    menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, TrayIcon, TrayIconBuilder, TrayIconEvent},
     App, AppHandle, Manager, RunEvent, Runtime, WebviewWindow, WebviewWindowBuilder,
 };
@@ -25,17 +25,44 @@ fn build_main_window_invisible<R: Runtime>(
     )
 }
 
-fn init_tray_menu<R: Runtime>(app: &App<R>) -> Result<(), Box<dyn std::error::Error>> {
-    let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+fn open_window_or_focus<R: Runtime>(app: &AppHandle<R>) -> anyhow::Result<()> {
+    let window = if let Some(window) = app.get_webview_window("main") {
+        window
+    } else {
+        build_main_window_invisible(app)?
+    };
+
+    window.show()?;
+    window.set_focus()?;
+    Ok(())
+}
+
+fn init_tray_menu<R: Runtime>(app: &App<R>) -> anyhow::Result<()> {
+    let open_i = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
     let restart_i = MenuItem::with_id(app, "restart", "Restart", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&quit_i, &restart_i])?;
+    let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+
+    let menu = Menu::with_items(
+        app,
+        &[
+            &open_i,
+            &PredefinedMenuItem::separator(app)?,
+            &restart_i,
+            &quit_i,
+        ],
+    )?;
 
     let menu_event_handler = |app: &AppHandle<R>, event: MenuEvent| match event.id.as_ref() {
-        "quit" => {
-            app.exit(0);
+        "open" => {
+            if let Err(e) = open_window_or_focus(app) {
+                eprintln!("Failed to open or focus window: {:?}", e);
+            }
         }
         "restart" => {
             app.restart();
+        }
+        "quit" => {
+            app.exit(0);
         }
         _ => {
             eprintln!("No handler for menu item: {:?}", event.id);
@@ -45,15 +72,7 @@ fn init_tray_menu<R: Runtime>(app: &App<R>) -> Result<(), Box<dyn std::error::Er
     let tray_event_handler = |icon: &TrayIcon<R>, event: TrayIconEvent| -> anyhow::Result<()> {
         match event {
             TrayIconEvent::Click { button, .. } if button == MouseButton::Left => {
-                let window = if let Some(window) = icon.app_handle().get_webview_window("main") {
-                    window
-                } else {
-                    build_main_window_invisible(icon.app_handle())?
-                };
-
-                window.show()?;
-                window.set_focus()?;
-                Ok(())
+                open_window_or_focus(icon.app_handle())
             }
             _ => Ok(()),
         }
