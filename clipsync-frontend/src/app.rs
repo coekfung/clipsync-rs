@@ -19,7 +19,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <div class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-            <div class="bg-white shadow-md rounded p-6 w-full max-w-md">
+            <div class="bg-white shadow-md rounded p-6 w-full flex flex-col flex-grow">
                 <h1 class="text-2xl font-bold mb-4 text-center">"Clipboard Sync"</h1>
 
                 <div class="mb-4">
@@ -61,7 +61,7 @@ pub fn App() -> impl IntoView {
                     </button>
                 </div>
 
-                <div class="bg-gray-50 border border-gray-300 rounded p-3 h-40 overflow-y-scroll text-sm text-gray-700">
+                <div class="bg-gray-50 border border-gray-300 rounded p-3 h-40 flex-grow overflow-y-scroll text-sm text-gray-700">
                     {move || logs.get().iter().map(|log| view! {
                         <div class="leading-tight">{log.clone()}</div>
                     }).collect::<Vec<_>>()}

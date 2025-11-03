@@ -20,6 +20,8 @@ fn build_main_window_invisible<R: Runtime>(
     Ok(
         WebviewWindowBuilder::new(handle, "main", tauri::WebviewUrl::App("index.html".into()))
             .title("ClipSync")
+            .min_inner_size(400.0, 650.0)
+            .max_inner_size(600.0, 800.0)
             .visible(false) // show after restoring state
             .build()?,
     )
@@ -97,7 +99,6 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             init_tray_menu(app)?;
 
